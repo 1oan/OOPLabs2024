@@ -4,7 +4,7 @@
 int string_to_int(char s[])
 {
     int result = 0;
-    for (int i = 0; s[i] != '\0'; i++)
+    for (int i = 0; s[i] != '\0' && s[i] != '\n'; i++)
         result = result * 10 + (s[i] - '0');
     return result;
 }
