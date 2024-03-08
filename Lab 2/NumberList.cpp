@@ -8,8 +8,8 @@ void NumberList::Init()
 
 bool NumberList::Add(int x)
 {
-	numbers[count++] = x;
 	if(count >= 10) return false;
+	numbers[count++] = x;
 }
 
 void NumberList::Sort()
