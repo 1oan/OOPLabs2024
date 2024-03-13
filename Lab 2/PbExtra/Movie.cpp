@@ -2,7 +2,7 @@
 
 void Movie::set_name(const char* name)
 {
-	nume = name;
+	strcpy(nume, name);
 }
 
 const char* Movie::GetName()
