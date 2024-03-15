@@ -63,7 +63,7 @@ char* Math::Add(const char* a, const char* b)
 	alen = strlen(a);
 	blen = strlen(b);
 	maxlen = alen > blen ? alen : blen;
-	res = new char[maxlen];
+	res = new char[maxlen + 2];
 	res[maxlen + 1] = '\0';
 	carry = 0;
 	i = alen - 1;
