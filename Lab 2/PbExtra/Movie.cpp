@@ -1,4 +1,7 @@
+#define _CRT_SECURE_NO_WARNINGS
 #include "Movie.h"
+#include <cstring>
+
 
 void Movie::set_name(const char* name)
 {

@@ -1,7 +1,7 @@
 #pragma once
 class Movie
 {
-	const char* nume;
+	char* nume;
 	int an_lansare, lungime;
 	float scor;
 public:

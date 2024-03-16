@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include "Movie.h"
-#include "Global.h"
+#include "GlobalExtra.h"
 #include "MovieSeries.h"
 
 using namespace std;
@@ -34,11 +34,11 @@ score       : %d
 length      : %d
 passed years: %d
 )",
-movie_compare_name(ep4, ep5),
-movie_compare_year(ep4, ep5),
-movie_compare_score(ep4, ep5),
-movie_compare_length(ep4, ep5),
-movie_compare_passed_years(ep4, ep5));
+movie_compare_name(&ep4, &ep5),
+movie_compare_year(&ep4, &ep5),
+movie_compare_score(&ep4, &ep5),
+movie_compare_length(&ep4, &ep5),
+movie_compare_passed_years(&ep4, &ep5));
 
     MovieSeries series;
     series.init();
