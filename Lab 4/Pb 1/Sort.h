@@ -7,10 +7,10 @@ class Sort
 public:
     // add constuctors
     Sort(int n, int min, int max);
-    Sort(int n): vector(new int[n] { 7,5,6,9 } ) { }
+    Sort();
     Sort(int* v, int n);
     Sort(int n, ...);
-    Sort(char* s);
+    Sort(const char* s);
     void InsertSort(bool ascendent = false);
     void QuickSort(bool ascendent = false);
     void BubbleSort(bool ascendent = false);

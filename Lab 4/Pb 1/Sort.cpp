@@ -4,8 +4,14 @@
 #include "Sort.h"
 #include <cstdarg>
 
+Sort::Sort() : vector(new int[6] {7, 5, 6, 9, 8, 12})
+{
+	count = 6;
+}
+
 Sort::Sort(int n, int min, int max)
 {
+	vector = new int[n];
 	srand(time(0));
 	for (int i = 0; i < n; i++)
 		vector[i] = min + rand() % (max - min + 1);
@@ -14,6 +20,7 @@ Sort::Sort(int n, int min, int max)
 
 Sort::Sort(int* v, int n)
 {
+	vector = new int[n];
 	for (int i = 0; i < n; i++)
 		vector[i] = v[i];
 	count = n;
@@ -21,6 +28,7 @@ Sort::Sort(int* v, int n)
 
 Sort::Sort(int n, ...)
 {
+	vector = new int[n];
 	va_list(pr);
 	va_start(pr, n);
 	for (int i = 0; i < n; i++)
@@ -35,11 +43,23 @@ int Cif(char ch)
 	return 0;
 }
 
-Sort::Sort(char* s)
+Sort::Sort(const char* s)
 {
-	int nr;
+	int i, nr;
 	count = nr = 0;
-	for (int i = 0; s[i] != '\0'; i++)
+	for (i = 0; s[i] != '\0'; i++)
+	{
+		if (Cif(s[i]))
+			nr = nr * 10 + (s[i] - '0');
+		else
+		{
+			count++;
+			nr = 0;
+		}
+	}
+	vector = new int[count];
+	count = nr = 0;
+	for (i = 0; s[i] != '\0'; i++)
 	{
 		if (Cif(s[i]))
 			nr = nr * 10 + (s[i] - '0');
@@ -49,6 +69,41 @@ Sort::Sort(char* s)
 			nr = 0;
 		}
 	}
+	vector[count++] = nr;
+}
+
+int Partition(int* v, int st, int dr)
+{
+	int pivot, i, j;
+	pivot = v[dr];
+	i = st - 1;
+	for (j = st; j <= dr; j++)
+		if (v[j] < pivot)
+		{
+			i++;
+			int aux = v[i];
+			v[i] = v[j];
+			v[j] = aux;
+		}
+	int aux = v[i + 1];
+	v[i + 1] = v[dr];
+	v[dr] = aux;
+	return (i + 1);
+}
+
+void QuickSortRec(int* v, int st, int dr)
+{
+	if (st < dr)
+	{
+		int mij = Partition(v, st, dr);
+		QuickSortRec(v, st, mij - 1);
+		QuickSortRec(v, mij + 1, dr);
+	}
+}
+
+void Sort::QuickSort(bool ascending)
+{
+	QuickSortRec(vector, 0, count - 1);
 }
 
 void Sort::InsertSort(bool ascending)
@@ -75,7 +130,7 @@ void Sort::BubbleSort(bool ascending)
 	while (!sortat)
 	{
 		sortat = true;
-		for(int i = 0; i < count - 1; i++)
+		for (int i = 0; i < count - 1; i++)
 			if (vector[i] > vector[i + 1])
 			{
 				int aux = vector[i];
@@ -84,21 +139,25 @@ void Sort::BubbleSort(bool ascending)
 				sortat = false;
 			}
 	}
-	
+	if (!ascending)
+	{
+		for (int i = 0; i < count / 2; i++)
+			vector[i] = vector[count - i - 1];
+	}
 }
 
 void Sort::Print()
 {
 	for (int i = 0; i < count; i++)
-		printf("%d",vector[i]);
+		printf("%d ", vector[i]);
+	printf("\n");
 }
 
 int Sort::GetElementFromIndex(int index)
 {
-	if (index < 0 || index > count)
+	if (index < 0 || index >= count)
 	{
-		printf("La pozitia dorita nu exista un element in vector");
-		return;
+		return -1;
 	}
 	return vector[index];
 }
