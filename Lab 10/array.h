@@ -1,29 +1,32 @@
 #pragma once
-#include<exception>
-
+#include <iostream>
+#include <exception>
 using namespace std;
 
-class IndexOut : public exception
+class ArrayException : public exception
 {
     virtual const char* what() const throw()
     {
-        return "Indexul este inafara domeniului";
+        return "Array exception";
     }
 };
-class SizeBiggerOrQualThanCap : public exception
+
+class exceptie1 : public ArrayException
 {
     virtual const char* what() const throw()
     {
-        return "Size-ul mai mare sau egal decat capacitatea";
+        return "Indexul este inafara domeniului!";
     }
 };
-class CapacityAloc : public exception
+
+class exceptie2 : public ArrayException
 {
     virtual const char* what() const throw()
     {
-        return "Eroare alocare capacitate";
+        return "Capacitate depasita";
     }
 };
+
 class Compare
 {
 public:
@@ -33,248 +36,282 @@ template<class T>
 class ArrayIterator
 {
 private:
+    int Current; // mai adaugati si alte date si functii necesare pentru iterator
     T** list;
-    int Current;
+
 public:
+
     ArrayIterator(T** List, int start)
     {
-        this->list = List;
-        this->Current = start;
+        list = List;
+        Current = start;
     }
+
     ArrayIterator& operator++()
     {
-        this->Current++;
+        Current++;
         return *this;
     }
+
     ArrayIterator& operator--()
     {
-        this->Current--;
+        Current--;
         return *this;
     }
-    bool operator==(ArrayIterator<T>& cmp)
+
+    bool operator=(ArrayIterator<T>& other)
     {
-        return *this == cmp;
+        return list == other.list && Current == other.Current;
     }
-    bool operator!=(ArrayIterator<T>& cmp)
+
+    bool operator!=(ArrayIterator<T>& other)
     {
-        return *this != cmp;
+        return !(*this == other);
     }
+
     T* GetElement()
     {
-        return this->list[this->Current];
+        return list[Current];
     }
+
+
 };
 template<class T>
 class Array
 {
 private:
-    T** List; 
-    int Capacity; 
-    int Size;
+    T** List; // lista cu pointeri la obiecte de tipul T*
+    int Capacity; // dimensiunea listei de pointeri
+    int Size; // cate elemente sunt in lista
 public:
-    Array()
+    Array() // Lista nu e alocata, Capacity si Size = 0
     {
-        this->Capacity = this->Size = 0;
-        this->List = nullptr;
+        List = nullptr;
+        Capacity = 0;
+        Size = 0;
     }
-    ~Array()
+    ~Array() // destructor
     {
-        for (int i = 0;i < this->Size; i++)
-            if (this->List[i]) delete this->List[i];
-        delete[] this->List;
+        for (int i = 0; i < Size; i++)
+            delete List[i];
+        delete[] List;
     }
-    Array(int capacity)
+    Array(int capacity) // Lista e alocata cu 'capacity' elemente
     {
-            if (capacity < 0)
-                throw CapacityAloc();
-            this->Capacity = capacity;
-            this->Size = 0;
-            this->List = nullptr;
-        
+        Capacity = capacity;
+        Size = 0;
+        if (Capacity < 0)
+            throw ArrayException();
+        List = new T * [Capacity];
     }
-    Array(const Array<T>& otherArray)
+    Array(const Array<T>& otherArray) // constructor de copiere
     {
-        this->Capacity = otherArray.Capacity;
-        this->Size = otherArray.Size;
-        this->List = new T * [this->Capacity];
-        for (int i = 0; i < this->Size; i++)
-            this->List[i] = new T(*otherArray.List[i]);
+        List = new T * [Capacity];
+        Capacity = otherArray.Capacity;
+        Size = otherArray.Size;
+        for (int i = 0; i < Size; i++)
+            List[i] = new T(*otherArray.List[i]);
+    }
+    T& operator[] (int index) // arunca exceptie daca index este out of range
+    {
+        if (index < 0 || index >= Size)
+            throw exceptie1();
+        return *List[index];
     }
 
-    T& operator[] (int index)
+    const Array<T>& operator+=(const T& newElem) // adauga un element de tipul T la sfarsitul listei si returneaza this
     {
-        if (index < 0 || index >= this->Size)
-            throw IndexOut;
-        return *this->List[index];
+        if (Size >= Capacity)
+            throw exceptie2();
+        List[Size++] = new T(newElem);
+        return *this;
     }
 
-    const Array<T>& operator+=(const T& newElem)
+    const Array<T>& Insert(int index, const T& newElem) // adauga un element pe pozitia index, retureaza this. Daca index e invalid arunca o exceptie
     {
-        if (this->Size >= this->Capacity)
-            throw SizeBiggerOrQualThanCap;
-        this->List[this->Size++] = new T(newElem);
+        if (index < 0 || index > Size)
+            throw exceptie1();
+        if (Size >= Capacity)
+            throw exceptie2();
+        for (int i = Size; i > index; i--)
+            List[i] = List[i - 1];
+        List[index] = new T(newElem);
+        Size++;
         return *this;
     }
-    const Array<T>& Insert(int index, const T& newElem)
+
+    const Array<T>& Insert(int index, const Array<T> otherArray) // adauga o lista pe pozitia index, retureaza this. Daca index e invalid arunca o exceptie
     {
-        if (index < 0 || index > this>Size)
-            throw IndexOut;
-        if (this->Size >= this->Capacity)
-            throw SizeBiggerOrQualThanCap;
-        for (int i = this->Size; i > index; i--)
-            this->List[i] = new T(this->List[i - 1]);
-        this->List[index] = new T(newElem);
-        this->Size++;
+        if (index < 0 || index > Size)
+            throw exceptie1();
+        if (Size >= Capacity)
+            throw exceptie2();
+        for (int i = Size - 1; i > index; i--)
+            List[i + otherArray.Size] = List[i];
+        Size += otherArray.Size;
         return *this;
     }
-    const Array<T>& Insert(int index, const Array<T> otherArray)
+
+    const Array<T>& Delete(int index) // sterge un element de pe pozitia index, returneaza this. Daca index e invalid arunca o exceptie
     {
-        if (index < 0 || index > this > Size)
-            throw IndexOut;
-        if (this->Size + otherArray.Size >= this->Capacity)
-            throw SizeBiggerOrQualThanCap;
-        for (int i = this->Size - 1; i > index; i--)
-            this->List[i + otherArray.Size] = new T(this->List[i]);
-        for (int i = 0; i < otherArray.Size;i++)
-        {
-            this->List[index + i] = new T(*otherArray.List[i]);
-        }
+        if (index < 0 || index > Size)
+            throw exceptie1();
+        delete List[index];
+        for (int i = index; i < Size - 1; i++)
+            List[i] = List[i + 1];
+        Size--;
+        return *this;
+
     }
-    const Array<T>& Delete(int index)
-    {
-        if (index < 0 || index > this > Size)
-            throw IndexOut;
-        for (int i = index; i < this->Size - 2; i--)
-            this->List[i] = this->List[i + 1];
-        delete this->List[this->Size - 2];
-        this->List[this->Size] = nullptr;
-        this->Size--;
-    }
+
     bool operator=(const Array<T>& otherArray)
     {
-        if (*this == otherArray) return true;
-        for (int i = 0; i < this->Size; i++)
-            delete this->List[i];
-        delete[] this->List;
-        this->Capacity = otherArray.Capacity;
-        this->Size = otherArray.Size;
-        this->List = new T * [Capacity];
+        if (this == &otherArray) 
+            return true;
         for (int i = 0; i < Size; i++)
-            this->List[i] = new T(otherArray.List[i]);
+            delete List[i];
+        delete List;
+        Capacity = otherArray.Capacity;
+        Size = otherArray.Size;
+        List = new T*[Capacity];
+        for (int i = 0; i < Size; i++)
+            List[i] = new T(otherArray.List[i]);
         return true;
     }
-    void Sort()
-    {
-        for(int i=0; i < this->Size - 2;i++)
-            for(int j=i+1; j<this->Size-1;j++)
-                if (this->List[i] > this->List[j])
-                {
-                    T* aux = List[i];
-                    this->List[i] = this->List[j];
-                    this->List[j] = aux;
-                }
 
-    }
-    void Sort(int(*compare)(const T&, const T&))
+    void Sort() // sorteaza folosind comparatia intre elementele din T
     {
-        for (int i = 0; i < this->Size - 2;i++)
-            for (int j = i+1; j < this->Size - 1;j++)
-                if (compare(this->List[i], this->List[j]) > 0)
+        for (int i = 0; i < Size - 1; i++)
+            for (int j = i + 1; j < Size; j++)
+                if (*List[i] > *List[j])
                 {
                     T* aux = List[i];
-                    this->List[i] = this->List[j];
-                    this->List[j] = aux;
-                }
-    }
-    void Sort(Compare* comparator)
-    {
-        for (int i = 0; i < this->Size - 2;i++)
-            for (int j = i+1; j < this->Size - 1;j++)
-                if (comparator->CompareElements(this->List[i], this->List[j]) > 0)
-                {
-                    T* aux = List[i];
-                    this->List[i] = this->List[j];
-                    this->List[j] = aux;
+                    List[i] = List[j];
+                    List[j] = aux;
                 }
     }
 
-    int BinarySearch(const T& elem)
+    void Sort(int(*compare)(const T&, const T&)) // sorteaza folosind o functie de comparatie
     {
-        int left = 0, right = this->Size - 1;
-        int mid = 0;
-        while (left <= right)
-        {
-            mid = (left + right) / 2;
-            if (List[mid] == elem) return true;
-            if (List[mid] > elem) right = mid - 1;
-            else left = mid + 1;
-        }
-        return -1;
+        for (int i = 0; i < Size - 1; i++)
+            for (int j = i + 1; j < Size; j++)
+                if (compare(*List[i], *List[j]) > 0)
+                {
+                    T* aux = List[i];
+                    List[i] = List[j];
+                    List[j] = aux;
+                }
     }
-    int BinarySearch(const T& elem, int(*compare)(const T&, const T&))
+
+
+    void Sort(Compare* comparator) // sorteaza folosind un obiect de comparatie
     {
-        int left = 0, right = this->Size - 1;
-        int mid;
-        while (left <= right)
-        {
-            mid = (left + right) / 2;
-            if (compare(List[mid], elem) == 0) return mid;
-            else if (compare(List[mid], elem) < 0) left = mid + 1;
-            else right = mid - 1;
-        }
-        return -1;
+        for (int i = 0; i < Size - 1; i++)
+            for (int j = i + 1; j < Size; j++)
+                if (comparator->CompareElements(*List[i], *List[j]) > 0)
+                {
+                    T* aux = List[i];
+                    List[i] = List[j];
+                    List[j] = aux;
+                }
     }
-    int BinarySearch(const T& elem, Compare* comparator)
+
+    // functii de cautare - returneaza pozitia elementului sau -1 daca nu exista
+    int BinarySearch(const T& elem) // cauta un element folosind binary search in Array
     {
-        int left = 0, right = this->Size - 1;
-        int mid;
+        int left, right, mid;
+        left = 0;
+        right = Size - 1;
         while (left <= right)
         {
             mid = (left + right) / 2;
-            if (comparator->CompareElements(List[mid], &elem) == 0) return mid;
-            else if (comparator->CompareElements(List[mid], &elem) < 0) left = mid + 1;
-            else right = mid - 1;
+            if (*List[mid] == elem) return 
+                mid;
+            else if (*List[mid] < elem) 
+                left = mid + 1;
+            else 
+                right = mid - 1;
         }
         return -1;
     }
 
-    int Find(const T& elem)
+    int BinarySearch(const T& elem, int(*compare)(const T&, const T&))//  cauta un element folosind binary search si o functie de comparatie
     {
-        for (int i = 0;i <this->Size;i++)
-            if (*List[i] == elem) return 1;
+        int left, right, mid;
+        left = 0;
+        right = Size - 1;
+        while (left <= right)
+        {
+            mid = (left + right) / 2;
+            if (compare(*List[mid], elem) == 0) 
+                return mid;
+            else if (compare(*List[mid], elem) < 0) 
+                left = mid + 1;
+            else 
+                right = mid - 1;
+        }
         return -1;
     }
-    int Find(const T& elem, int(*compare)(const T&, const T&))
+
+    int BinarySearch(const T& elem, Compare* comparator)//  cauta un element folosind binary search si un comparator
     {
-        for (int i = 0;i <this->Size;i++)
-          if (compare(List[i], elem) == 0) return 1;
-        
+        int left, right, mid;
+        left = 0;
+        right = Size - 1;
+        while (left <= right)
+        {
+            mid = (left + right) / 2;
+            if (comparator->CompareElements(*List[mid], &elem) == 0) 
+                return mid;
+            else if (comparator->CompareElements(*List[mid], &elem) < 0) 
+                left = mid + 1;
+            else 
+                right = mid - 1;
+        }
         return -1;
     }
-    int Find(const T& elem, Compare* comparator)
+
+    int Find(const T& elem) // cauta un element in Array
     {
-        for (int i = 0;i < this->Size;i++)
-         if (comparator->CompareElements(List[i], &elem) == 0) return 1;
+        for (int i = 0; i < Size; i++)
+            if (*List[i] == elem)
+                return 1;
+        return -1;
+    }
+
+    int Find(const T& elem, int(*compare)(const T&, const T&))//  cauta un element folosind o functie de comparatie
+    {
+        for (int i = 0; i < Size; i++)
+            if (compare(*List[i], elem) == 0) 
+                return 1;
+        return -1;
+    }
+
+    int Find(const T& elem, Compare* comparator)//  cauta un element folosind un comparator
+    {
+        for (int i = 0; i < Size; i++)
+            if (comparator->CompareElements(*List[i], &elem) == 0) 
+                return 1;
         return -1;
     }
 
     int GetSize()
     {
-        return this->Size;
+        return Size;
     }
+
     int GetCapacity()
     {
-        return this->Capacity;
+        return Capacity;
     }
 
     ArrayIterator<T> GetBeginIterator()
     {
-        return ArrayIterator<T>(this->List, 0);
+        return ArrayIterator<T>(List, 0);
     }
+
     ArrayIterator<T> GetEndIterator()
     {
-        return ArrayIterator<T>(this->List, this->Size);
+        return ArrayIterator<T>(List, Size);
     }
 };
-
-
